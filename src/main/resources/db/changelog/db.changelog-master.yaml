@@ -3,3 +3,5 @@ databaseChangeLog:
       file: db/changelog/user/001-create-users-table.yaml
   - include:
       file: db/changelog/catalog/001-create-categories-table.yaml
+  - include:
+      file: db/changelog/catalog/002-create-products-table.yaml
