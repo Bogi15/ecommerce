@@ -36,6 +36,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, CATALOG_PATHS).hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, CATALOG_PATHS).hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, CATALOG_PATHS).hasRole("ADMIN")
+                        .requestMatchers("/api/inventory/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .exceptionHandling(handling -> handling
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
