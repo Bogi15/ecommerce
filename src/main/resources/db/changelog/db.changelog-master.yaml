@@ -11,3 +11,5 @@ databaseChangeLog:
       file: db/changelog/inventory/001-create-inventory-tables.yaml
   - include:
       file: db/changelog/cart/001-create-cart-tables.yaml
+  - include:
+      file: db/changelog/order/001-create-order-tables.yaml
