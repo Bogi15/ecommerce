@@ -23,7 +23,7 @@ public class JwtService {
 
     public JwtService(
             @Value("${app.jwt.secret}") String secret,
-            @Value("${app.jwt.expiration-minutes}") long expirationMinutes) {
+            @Value("${app.jwt.access-token-expiration-minutes}") long expirationMinutes) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expirationMinutes = expirationMinutes;
     }

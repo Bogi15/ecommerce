@@ -39,6 +39,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return build(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS", "Invalid email or password");
     }
 
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ApiError> handleUnauthorized(UnauthorizedException ex) {
+        return build(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", ex.getMessage());
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiError> handleDataIntegrity(DataIntegrityViolationException ex) {
         log.warn("Data integrity violation: {}", ex.getMostSpecificCause().getMessage());

@@ -4,10 +4,12 @@ import com.shop.ecommerce.common.exception.ConflictException;
 import com.shop.ecommerce.common.security.JwtService;
 import com.shop.ecommerce.user.dto.AuthResponse;
 import com.shop.ecommerce.user.dto.LoginRequest;
+import com.shop.ecommerce.user.dto.RefreshTokenRequest;
 import com.shop.ecommerce.user.dto.RegisterRequest;
 import com.shop.ecommerce.user.dto.UserResponse;
 import com.shop.ecommerce.user.entity.Role;
 import com.shop.ecommerce.user.entity.User;
+import com.shop.ecommerce.user.exception.InvalidRefreshTokenException;
 import com.shop.ecommerce.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -22,6 +24,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
     @Transactional
     public UserResponse register(RegisterRequest request) {
@@ -40,13 +43,31 @@ public class AuthService {
         return UserResponse.from(userRepository.save(user));
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(normalizeEmail(request.email()))
                 .filter(found -> passwordEncoder.matches(request.password(), found.getPasswordHash()))
                 .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
+        return issueTokens(user);
+    }
 
-        return new AuthResponse(jwtService.generateToken(user), "Bearer", jwtService.getExpirationSeconds());
+    @Transactional(noRollbackFor = InvalidRefreshTokenException.class)
+    public AuthResponse refresh(RefreshTokenRequest request) {
+        return issueTokens(refreshTokenService.consume(request.refreshToken()));
+    }
+
+    @Transactional
+    public void logout(RefreshTokenRequest request) {
+        refreshTokenService.revoke(request.refreshToken());
+    }
+
+    private AuthResponse issueTokens(User user) {
+        return new AuthResponse(
+                jwtService.generateToken(user),
+                "Bearer",
+                jwtService.getExpirationSeconds(),
+                refreshTokenService.issue(user),
+                refreshTokenService.getExpirationSeconds());
     }
 
     private String normalizeEmail(String email) {
