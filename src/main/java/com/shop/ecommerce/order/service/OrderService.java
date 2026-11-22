@@ -15,10 +15,14 @@ import com.shop.ecommerce.order.entity.Order;
 import com.shop.ecommerce.order.entity.OrderItem;
 import com.shop.ecommerce.order.entity.OrderStatus;
 import com.shop.ecommerce.order.repository.OrderRepository;
+import com.shop.ecommerce.payment.event.PaymentFailedEvent;
+import com.shop.ecommerce.payment.event.PaymentSucceededEvent;
+import com.shop.ecommerce.payment.service.PaymentLookupService;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +35,7 @@ public class OrderService {
     private final CartService cartService;
     private final ProductService productService;
     private final InventoryService inventoryService;
+    private final PaymentLookupService paymentLookupService;
 
     @Transactional
     public OrderResponse createOrder(Long userId, String idempotencyKey) {
@@ -108,12 +113,39 @@ public class OrderService {
             throw new BusinessRuleException("An order in status " + order.getStatus() + " cannot be cancelled");
         }
 
+        if (paymentLookupService.hasPendingPayment(orderId)) {
+            throw new BusinessRuleException("Payment in progress");
+        }
+
         if (order.getStatus() == OrderStatus.STOCK_RESERVED) {
             inventoryService.release(orderId);
         }
         transition(order, OrderStatus.CANCELLED);
 
         return OrderResponse.from(order);
+    }
+
+    @EventListener
+    @Transactional
+    public void onPaymentSucceeded(PaymentSucceededEvent event) {
+        Order order = findOrder(event.orderId());
+
+        transition(order, OrderStatus.PAID);
+        inventoryService.commit(order.getId());
+    }
+
+    @EventListener
+    @Transactional
+    public void onPaymentFailed(PaymentFailedEvent event) {
+        Order order = findOrder(event.orderId());
+
+        transition(order, OrderStatus.PAYMENT_FAILED);
+        inventoryService.release(order.getId());
+    }
+
+    private Order findOrder(Long orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Order not found: " + orderId));
     }
 
     private ProductResponse loadProduct(Long productId) {
