@@ -1,5 +1,6 @@
 package com.shop.ecommerce.common.exception;
 
+import com.shop.ecommerce.payment.exception.InvalidWebhookException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -43,6 +44,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ApiError> handleUnauthorized(UnauthorizedException ex) {
         return build(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidWebhookException.class)
+    public ResponseEntity<ApiError> handleInvalidWebhook(InvalidWebhookException ex) {
+        return build(HttpStatus.BAD_REQUEST, "INVALID_WEBHOOK", "Invalid notification");
     }
 
     @ExceptionHandler(PropertyReferenceException.class)

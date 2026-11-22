@@ -37,6 +37,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, CATALOG_PATHS).hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, CATALOG_PATHS).hasRole("ADMIN")
                         .requestMatchers("/api/inventory/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/payments/stripe/webhook").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(handling -> handling
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
