@@ -6,6 +6,11 @@ import com.shop.ecommerce.payment.service.PaymentService;
 import com.stripe.StripeClient;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +21,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
+@Tag(name = "Payment webhook")
+@SecurityRequirements
 @RestController
 @RequestMapping("/api/payments/stripe/webhook")
 public class StripeWebhookController {
@@ -36,9 +43,16 @@ public class StripeWebhookController {
         this.webhookSecret = webhookSecret;
     }
 
+    @Operation(
+            summary = "Receive a Stripe event",
+            description = "Called by Stripe only, not by shop users. Every request must carry a valid "
+                    + "Stripe-Signature header and is otherwise rejected.")
+    @ApiResponse(responseCode = "200", description = "Event accepted")
+    @ApiResponse(responseCode = "400", description = "Missing or invalid signature")
     @PostMapping
     public ResponseEntity<Void> receive(
             @RequestBody String payload,
+            @Parameter(description = "Signature computed by Stripe with the webhook secret")
             @RequestHeader(name = "Stripe-Signature", required = false) String signature) {
         Event event = verify(payload, signature);
 

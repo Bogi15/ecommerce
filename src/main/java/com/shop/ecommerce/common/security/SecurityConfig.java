@@ -21,6 +21,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private static final String[] CATALOG_PATHS = {"/api/products/**", "/api/categories/**"};
+    private static final String[] API_DOCS_PATHS = {
+            "/v3/api-docs/**", "/v3/api-docs.yaml", "/swagger-ui.html", "/swagger-ui/**"};
 
     private final JwtService jwtService;
 
@@ -31,6 +33,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers(API_DOCS_PATHS).permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, CATALOG_PATHS).permitAll()
                         .requestMatchers(HttpMethod.POST, CATALOG_PATHS).hasRole("ADMIN")
